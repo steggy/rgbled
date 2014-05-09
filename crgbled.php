@@ -30,18 +30,21 @@
 <style>
 body {
 font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
-font-size: 162.5%;
+font-size: 182%;
 background-color:cyan;
 }
 button
 {
-width:160px;
-height:100px;
+width:180px;
+height:120px;
 font-size:40px;
+border: 1px solid #96968d;
+border-radius: 10px;
+box-shadow: 2px 2px 3px #888;
 }
 select
 {
-width:75px;
+width:95px;
 height:100px;
 font-size:40px;
 
@@ -96,7 +99,7 @@ left:250px;*/
 <button id="button2" style="background-color:cyan;" onclick="mm('peri')">PERI</button>
 
 <br><br>
-<button id="button2" onclick="mm('color')">color</button>
+<button id="button2" onclick="mm('color')">COLOR</button>
 R<select id="red" name="red">
 <?
 for($i=0;$i < 10.5; $i += 0.5)
