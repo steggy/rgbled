@@ -78,7 +78,8 @@ left:250px;*/
 <body onload="mm('status');">
 
 
-<div id="div0">RGB LED Control</div><div id=div1></div>
+<div id="div0">Yard Light Control</div>
+<br><div id="div1"></div>
 
 <br>
 <button id="button2" onclick="mm('status')">RGB STATUS</button>
