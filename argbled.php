@@ -103,6 +103,7 @@ switch(strtolower($_POST['ss']))
 		break;
 	case "white":
 		readcmdini($GLOBALS['cmdinifile']);
+		$GLOBALS['cmdini_array']['command']['cmd'] = "white";
 		$GLOBALS['cmdini_array']['white']['onoff'] = '1';
 		$GLOBALS['cmdini_array']['white']['pwr'] = $_POST['pwr'] / 10;
 		write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
@@ -111,8 +112,9 @@ switch(strtolower($_POST['ss']))
 
 	case "whiteoff":
 		readcmdini($GLOBALS['cmdinifile']);
+		$GLOBALS['cmdini_array']['command']['cmd'] = "white";
 		$GLOBALS['cmdini_array']['white']['onoff'] = '1';
-		$GLOBALS['cmdini_array']['white']['pwr'] = 0;
+		$GLOBALS['cmdini_array']['white']['pwr'] = '0';
 		write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
 		echo "WHITE " .$GLOBALS['cmdini_array']['white']['pwr'];
 		break;

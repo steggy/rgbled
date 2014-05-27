@@ -98,7 +98,7 @@ if(isset($argv[1]))
 }
 
 //'*******************************************************************************
-//main is for deamonized mode
+//main is for debug mode
 function main()
 {
 $lcount = 0;
@@ -137,7 +137,10 @@ echo date('Y-m-d H:i:s') ."- Started Debug\n";
 				$GLOBALS['cmdini_array']['command']['cmd'] = 'z';
 				write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
 				break;
-
+			case 'white':
+				echo "White\n";
+				yardlight();
+				break;
 			default;
 				//echo "THROUGH SWITCH\n";
 
@@ -148,7 +151,7 @@ echo date('Y-m-d H:i:s') ."- Started Debug\n";
 //'*******************************************************************************
 
 //'*******************************************************************************
-//main is for deamonized mode
+//maindaemon is for deamonized mode
 function maindaemon()
 {
 //redirecting standard out
@@ -176,7 +179,7 @@ else if($pid){
 	//the main process
 	while(true)
 	{
-		if($lcount ==20)
+		if($lcount ==40)
 		{
 			echo date('Y-m-d H:i:s') ." Daemonized\n";
 			$lcount = 0;
@@ -187,11 +190,11 @@ else if($pid){
 		switch(strtolower($GLOBALS['cmdini_array']['command']['cmd']))
 		{
 			case 'fade':
-				echo "In fade\n";
+				//echo "In fade\n";
 				randomlight();
 				break;
 			case 'color':
-				echo "IN COLOR\n";
+				//echo "IN COLOR\n";
 				changecolor($GLOBALS['cmdini_array']['color']['r'],$GLOBALS['cmdini_array']['color']['g'],$GLOBALS['cmdini_array']['color']['b']);
 				$GLOBALS['cmdini_array']['command']['cmd'] = 'z';
 				write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
@@ -206,7 +209,9 @@ else if($pid){
 				$GLOBALS['cmdini_array']['command']['cmd'] = 'z';
 				write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
 				break;
-
+			case 'white':
+				yardlight();
+				break;
 			default;
 				//echo "THROUGH SWITCH\n";
 
@@ -280,19 +285,25 @@ function randomlight()
 		{
 			//if orl is less then rl count down else count up
 		}else{*/
-		echo "Red = " .$rl ." green = " .$gl ." Blue = " .$bl ."\n\n";
+		if ($GLOBALS['debugmode'] == '1') 
+		{
+			echo "Red = " .$rl ." green = " .$gl ." Blue = " .$bl ."\n\n";
+			echo "FADED\n";
+		}
+		
 		fade($rl,$gl,$bl);
-		echo "FADED\n";
 		$GLOBALS['count']++;
 		sleep($GLOBALS['randcolorpause']);
 		readcmdini($GLOBALS['cmdinifile']);
 		switch (strtolower($GLOBALS['cmdini_array']['command']['cmd'])) 
 		{
-			case 'stop':
-				return;
+			case 'white':
+				yardlight();
 				break;
+			case 'stop':
 			case 'color':
 				return;
+				break;
 			default:
 				# code...
 				break;
@@ -415,7 +426,18 @@ $d=$GLOBALS['ini_array']['strobe']['delay'];
 		changecolor(0,0,0);
 		usleep($d/2);
 		readcmdini($GLOBALS['cmdinifile']);
-		if(strtolower($GLOBALS['cmdini_array']['command']['cmd']) == 'stop'){return;}
+		switch(strtolower($GLOBALS['cmdini_array']['command']['cmd']))
+		{
+			
+			case 'white':
+				yardlight();
+				break;
+			case 'stop':
+			case 'color':
+				return;
+				break;	
+		}
+		
 	
 	}
 }
@@ -430,6 +452,29 @@ function updown($o,$n)
 	}else{
 		return 1;
 	}
+}
+//'*******************************************************************************
+
+//'*******************************************************************************
+function yardlight()
+{
+	//When debuging without pi-blaster use this function
+	//change this function's name to changecolor then change the next function down to changecolorI
+	//You will need to reverse this when using pi-blaster
+	readcmdini($GLOBALS['cmdinifile']);
+	$p = $GLOBALS['cmdini_array']['white']['pwr'];
+	$GLOBALS['cmdini_array']['command']['cmd'] = 'z';
+	write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
+	$outy = "echo \"" .$GLOBALS['whitepin'] ."=" .$p ."\" > /dev/pi-blaster";
+	if (!$GLOBALS['debugmode'] == '1') 
+	{
+		$result = shell_exec($outy);
+	}else{
+		echo "yardlight\n";
+		echo $outy ."\n";
+	}
+	
+	
 }
 //'*******************************************************************************
 
