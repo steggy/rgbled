@@ -6,16 +6,6 @@
 
 //include pin settings, fade factor radom wait time - maybe strobe time
 
-
-//redirecting standard out
-//Make sure the user running the app has rw on the log file
-fclose(STDIN);
-fclose(STDOUT);
-fclose(STDERR);
-$STDIN = fopen('/dev/null', 'r');
-$STDOUT = fopen('/var/log/rgbled.log', 'wb');
-$STDERR = fopen('/var/log/rgblederror.log', 'wb');
-
 global $inifile;
 global $ini_array;
 global $cmdini_array;
@@ -23,6 +13,7 @@ global $cmdinifile;
 global $redpin;
 global $greenpin;
 global $bluepin;
+global $whitepin;
 global $strobedelay;
 global $cmd;
 global $count;
@@ -86,7 +77,7 @@ if(isset($argv[1]))
 			break;
 		case '-D':
 			//daemon mode
-			main();
+			maindaemon();
 			break;
 		default;
 			showusage();
@@ -104,6 +95,65 @@ if(isset($argv[1]))
 //main is for deamonized mode
 function main()
 {
+$lcount = 0;
+echo date('Y-m-d H:i:s') ."- Started Debug\n";
+
+	//the main process
+	while(true)
+	{
+		if($lcount ==20)
+		{
+			echo date('Y-m-d H:i:s') ." Debug\n";
+			$lcount = 0;
+		}
+		$lcount++;
+		readcmdini($GLOBALS['cmdinifile']);
+		//echo $GLOBALS['cmdini_array']['command']['cmd'] ."\n";
+		switch(strtolower($GLOBALS['cmdini_array']['command']['cmd']))
+		{
+			case 'fade':
+				echo "In fade\n";
+				randomlight();
+				break;
+			case 'color':
+				echo "IN COLOR\n";
+				changecolor($GLOBALS['cmdini_array']['color']['r'],$GLOBALS['cmdini_array']['color']['g'],$GLOBALS['cmdini_array']['color']['b']);
+				$GLOBALS['cmdini_array']['command']['cmd'] = 'z';
+				write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
+				break;
+			case 'stop':
+				changecolor(0,0,0);
+				$GLOBALS['cmdini_array']['command']['cmd'] = 'z';
+				write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
+				break;
+			case 'strobe':
+				strobeII($GLOBALS['cmdini_array']['color']['r'],$GLOBALS['cmdini_array']['color']['g'],$GLOBALS['cmdini_array']['color']['b']);
+				$GLOBALS['cmdini_array']['command']['cmd'] = 'z';
+				write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
+				break;
+
+			default;
+				//echo "THROUGH SWITCH\n";
+
+		}
+		sleep(1);
+	}
+}
+//'*******************************************************************************
+
+//'*******************************************************************************
+//main is for deamonized mode
+function maindaemon()
+{
+//redirecting standard out
+//Make sure the user running the app has rw on the log file
+fclose(STDIN);
+fclose(STDOUT);
+fclose(STDERR);
+$STDIN = fopen('/dev/null', 'r');
+$STDOUT = fopen('/var/log/rgbled.log', 'wb');
+$STDERR = fopen('/var/log/rgblederror.log', 'wb');
+
 $lcount = 0;
 echo date('Y-m-d H:i:s') ."- Started Daemon\n";
 //fork the process to work in a daemonized environment
@@ -168,6 +218,8 @@ function showusage()
 	echo "Mandatory arguments\n";
 	echo "  -h, \t This help\n";
 	echo "  -x, \t Turn off all leds\n";
+	echo "  -D, \t Daemon mode\n";
+	echo "  -B, \t Debug mode\n";
 	echo "  -c [.001-10] [.001-10] [.001-10], \t Set and turn on LED - Color values seperated by space.\n";
 	echo "  -s [.001-10] [.001-10] [.001-10] [x-duration] [y-count], \t Strobe LED - Color values seperated by space. \n";
 	echo "  -r, \t Generate Random colors every x seconds and fade to the next color\n";
@@ -397,6 +449,10 @@ function changecolor($r,$g,$b)
 //'*******************************************************************************
 function readini($file)
 {
+if (!file_exists($file)) {
+	echo "*********************************************\nrgbled.php\nFile not found: " .$file ."\n\n";
+	die;
+}
 $GLOBALS['ini_array'] = parse_ini_file($file,true);
 $GLOBALS['redpin'] = $GLOBALS['ini_array']['pins']['red'];
 $GLOBALS['greenpin'] = $GLOBALS['ini_array']['pins']['green'];
