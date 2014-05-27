@@ -20,6 +20,7 @@ global $count;
 global $count2;
 global $randcolorpause;
 global $fadepause;
+global $debugmode;
 
 $GLOBALS['cmd'] = '';
 $GLOBALS['count'] = 0;
@@ -79,6 +80,11 @@ if(isset($argv[1]))
 			//daemon mode
 			maindaemon();
 			break;
+		case '-B':
+			//debug mode
+			$GLOBALS['debugmode'] = '1';
+			main();
+			break;	
 		default;
 			showusage();
 			die;
@@ -417,7 +423,7 @@ function updown($o,$n)
 //'*******************************************************************************
 
 //'*******************************************************************************
-function changecolorI($r,$g,$b)
+function debugcolor($r,$g,$b)
 {
 	//When debuging without pi-blaster use this function
 	//change this function's name to changecolor then change the next function down to changecolorI
@@ -436,6 +442,19 @@ function changecolorI($r,$g,$b)
 
 //'*******************************************************************************
 function changecolor($r,$g,$b)
+{
+	if (!$GLOBALS['debugmode'] == '1') 
+	{
+		daemoncolor($r,$g,$b);
+	}else{
+		debugcolor($r,$g,$b);
+
+	}
+}
+//'*******************************************************************************
+
+//'*******************************************************************************
+function daemoncolor($r,$g,$b)
 {
 	$outr = "echo \"" .$GLOBALS['redpin'] ."=" .$r / 10 ."\" > /dev/pi-blaster";
 	$outg = "echo \"" .$GLOBALS['greenpin'] ."=" .$g / 10 ."\" > /dev/pi-blaster";
