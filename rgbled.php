@@ -286,7 +286,18 @@ function randomlight()
 		$GLOBALS['count']++;
 		sleep($GLOBALS['randcolorpause']);
 		readcmdini($GLOBALS['cmdinifile']);
-		if(strtolower($GLOBALS['cmdini_array']['command']['cmd']) == 'stop'){return;}
+		switch (strtolower($GLOBALS['cmdini_array']['command']['cmd'])) 
+		{
+			case 'stop':
+				return;
+				break;
+			case 'color':
+				return;
+			default:
+				# code...
+				break;
+		}
+		//if(strtolower($GLOBALS['cmdini_array']['command']['cmd']) == 'stop'){return;}
 		/*}*/
 	}
 }
@@ -476,6 +487,7 @@ $GLOBALS['ini_array'] = parse_ini_file($file,true);
 $GLOBALS['redpin'] = $GLOBALS['ini_array']['pins']['red'];
 $GLOBALS['greenpin'] = $GLOBALS['ini_array']['pins']['green'];
 $GLOBALS['bluepin'] = $GLOBALS['ini_array']['pins']['blue'];
+$GLOBALS['whitepin'] = $GLOBALS['ini_array']['pins']['white'];
 $GLOBALS['strobedelay'] = $GLOBALS['ini_array']['strobe']['delay'];
 $GLOBALS['cmd'] = $GLOBALS['ini_array']['command']['stop'];
 $GLOBALS['randcolorpause'] = $GLOBALS['ini_array']['randomcolor']['dur'];

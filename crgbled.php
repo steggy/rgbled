@@ -5,7 +5,7 @@
     <head>
         <script src="jquery.min.js"></script>
         <script type="text/javascript">
-                function mm(ss){
+            function mm(ss){
 		     //var selects = document.getElementById("vid");
 			var red = document.getElementById("red");
 			var green = document.getElementById("green");
@@ -14,40 +14,70 @@
 		     var rr = red.options[red.selectedIndex].value;
 		     var gg = red.options[green.selectedIndex].value;
 		     var bb = red.options[blue.selectedIndex].value;
-                     //alert('This is vv: ' + vv);
-                    $.ajax({
-                        type: "POST",
-                        url: "argbled.php",
-                        data: "ss="+ss+"&red="+rr+"&green="+gg+"&blue="+bb,
-                        success:function(data){
-                            //alert('This was sent back: ' + data);
-                            //Next line adds the data from PHP into the DOM
-                            $('#div1').html(data);				
-                        }
+                 //alert('This is vv: ' + vv);
+                $.ajax({
+                    type: "POST",
+                    url: "argbled.php",
+                    data: "ss="+ss+"&red="+rr+"&green="+gg+"&blue="+bb,
+                    success:function(data){
+                        //alert('This was sent back: ' + data);
+                        //Next line adds the data from PHP into the DOM
+                        $('#div1').html(data);				
+                    }
                     });
                 }
+            function ww(ss){
+            var pwr = document.getElementById("pwr");
+            var pw = pwr.options[pwr.selectedIndex].value;
+                 //alert('This is vv: ' + vv);
+                $.ajax({
+                    type: "POST",
+                    url: "argbled.php",
+                    data: "ss="+ss+"&pwr="+pw,
+                    success:function(data){
+                        //alert('This was sent back: ' + data);
+                        //Next line adds the data from PHP into the DOM
+                        $('#div1').html(data);              
+                    }
+                    });
+                }    
         </script>
 <style>
 body {
 font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
-font-size: 182%;
+font-size: 162.5%;
 background-color:cyan;
 }
 button
 {
-width:180px;
-height:120px;
-font-size:40px;
-border: 1px solid #96968d;
-border-radius: 10px;
-box-shadow: 2px 2px 3px #888;
-}
-select
-{
-width:95px;
+width:160px;
 height:100px;
 font-size:40px;
+-moz-border-radius: 15px;
+-webkit-border-radius: 15px;
+/*border: 5px solid #009900;*/
 
+border:1px solid gray;
+/*border-radius: 10px;*/
+box-shadow: 5px 5px 3px #494949;
+
+padding: 5px;
+}
+
+select
+{
+width:75px;
+height:100px;
+font-size:40px;
+-moz-border-radius: 15px;
+-webkit-border-radius: 15px;
+/*border: 5px solid #009900;*/
+
+border:1px solid gray;
+/*border-radius: 10px;*/
+box-shadow: 5px 5px 3px #494949;
+
+padding: 5px;
 }
 
 #div0
@@ -78,13 +108,13 @@ left:250px;*/
 <body onload="mm('status');">
 
 
-<div id="div0">Yard Light Control</div>
-<br><div id="div1"></div>
+<div id="div0">RGB LED Control</div><div id=div1></div>
 
 <br>
 <button id="button2" onclick="mm('status')">RGB STATUS</button>
 <button id="button2" onclick="mm('start')">START RGB</button>
 <button id="button2" onclick="mm('stop')">STOP RGB</button>
+<button id="button2" onclick="mm('restart')">RESTART RGB</button>
 
 <br><br>
 <button id="button2" onclick="mm('fade')">FADE</button>
@@ -100,7 +130,7 @@ left:250px;*/
 <button id="button2" style="background-color:cyan;" onclick="mm('peri')">PERI</button>
 
 <br><br>
-<button id="button2" onclick="mm('color')">COLOR</button>
+<button id="button2" onclick="mm('color')">color</button>
 R<select id="red" name="red">
 <?
 for($i=0;$i < 10.5; $i += 0.5)
@@ -111,7 +141,7 @@ for($i=0;$i < 10.5; $i += 0.5)
 </select>
 G<select id="green" name="green">
 <?
-for($i=0;$i < 11; $i += 0.5)
+for($i=0;$i < 10.5; $i += 0.5)
 {
 ?><option value="<?=$i;?>"><?=$i;?></option><?
 }
@@ -119,13 +149,25 @@ for($i=0;$i < 11; $i += 0.5)
 </select>
 B<select id="blue" name="blue">
 <?
-for($i=0;$i < 11; $i += 0.5)
+for($i=0;$i < 10.5; $i += 0.5)
 {
 ?><option value="<?=$i;?>"><?=$i;?></option><?
 }
 ?>
 </select>
 <br>
+<br>
+<hr>
+<button id="button2" style="background-color:white;" onclick="ww('white')">WHITE</button>
+<select id=pwr name=pwr>
+<?
+for($i=1;$i < 11; $i++)
+{
+    ?><option value="<?=$i;?>"><?=$i;?></option><?
+}
+?>
+    </select>
+    <button id="button2" style="background-color:white;" onclick="ww('whiteoff')">WHITE OFF</button>
 <br>
 
 <?=$_SERVER['HTTP_HOST']?>

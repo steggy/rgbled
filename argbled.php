@@ -29,6 +29,11 @@ switch(strtolower($_POST['ss']))
 		$result = shell_exec('sudo /var/www/rgbled/rgbledd status');
 		echo $result;
 		break;
+	case "restart":
+		$result = shell_exec('sudo /var/www/rgbled/rgbledd restart');
+		$result = shell_exec('sudo /var/www/rgbled/rgbledd status');
+		echo $result;
+		break;	
 	case "fade":
 		readcmdini($GLOBALS['cmdinifile']);
 		$GLOBALS['cmdini_array']['command']['cmd'] = "fade";
@@ -95,6 +100,21 @@ switch(strtolower($_POST['ss']))
 		$GLOBALS['cmdini_array']['color']['b'] = "9";
 		write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
 		echo "PERI";
+		break;
+	case "white":
+		readcmdini($GLOBALS['cmdinifile']);
+		$GLOBALS['cmdini_array']['white']['onoff'] = '1';
+		$GLOBALS['cmdini_array']['white']['pwr'] = $_POST['pwr'] / 10;
+		write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
+		echo "WHITE " .$GLOBALS['cmdini_array']['white']['pwr'];
+		break;
+
+	case "whiteoff":
+		readcmdini($GLOBALS['cmdinifile']);
+		$GLOBALS['cmdini_array']['white']['onoff'] = '1';
+		$GLOBALS['cmdini_array']['white']['pwr'] = 0;
+		write_ini_file($GLOBALS['cmdini_array'],$GLOBALS['cmdinifile']);
+		echo "WHITE " .$GLOBALS['cmdini_array']['white']['pwr'];
 		break;
 
 	case "purple":
