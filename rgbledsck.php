@@ -91,8 +91,8 @@ fclose(STDIN);
 fclose(STDOUT);
 fclose(STDERR);
 $STDIN = fopen('/dev/null', 'r');
-$STDOUT = fopen('/var/log/sprink.log', 'wb');
-$STDERR = fopen('/var/log/sprinkerror.log', 'wb');
+$STDOUT = fopen('/var/log/rgbled.log', 'wb');
+$STDERR = fopen('/var/log/rgblederror.log', 'wb');
 //dont't forget to create these log files
     while (true) 
     {    
