@@ -48,13 +48,14 @@ function sendcmd($cmd)
 	// write the user string to the socket
 	fputs ($fp, $cmd);
 	// get the result
-	$result = fgets ($fp, 1024);
+	//$result = fgets ($fp, 100000);
+	$result = fread($fp, 100000);
 	// close the connection
 	fputs ($fp, "exit");
 	fclose ($fp);
 	 
 	// trim the result and remove the starting ?
-	$result = trim($result);
+	//$result = trim($result);
 	//$result = substr($result, 2);
 	 echo $result ."\n";
 
