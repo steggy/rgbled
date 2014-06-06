@@ -45,7 +45,8 @@ $ogl = '99';
 $obl = '99';
 
 readini($GLOBALS['inifile']);
-
+if (isset($argv[1])) 
+{
 switch ($argv[1]) {
     case '-r':
         setsock();
@@ -60,6 +61,10 @@ switch ($argv[1]) {
     default:
         showusage();
         break;
+}
+}else{
+    showusage();
+    exit;
 }
 /*************************************/
 function setsock()
@@ -131,7 +136,7 @@ function checksock()
     //$input = socket_read($client, 1024);
     $status = @socket_get_status($client);
 
-    $input = @socket_read($client, 1024);
+    $input = @socket_read($client, 2048);
 
     // Strip all white spaces from input
     echo "RAW " .$input ."\n";
@@ -140,50 +145,91 @@ function checksock()
         break;
     }
     //$output = ereg_replace("[ \t\n\r]","",$input).chr(0);
-    $output = ereg_replace("[ \t\n\r]","",$input);
-    if(strstr($output, 'color') || strstr($output, '-c'))
-    {
-            $response = "In Color " .$output ." ";
-            $colorv = explode(",", $output);
-            if(isset($colorv))
-            {
-                echo "IS SET\n";
-                echo sizeof($colorv);
-                if (sizeof($colorv) == 4) {
-                    $response .= "We Have all 3\n";
-                    $GLOBALS['rl'] = $colorv[1];
-                    $GLOBALS['gl'] = $colorv[2];
-                    $GLOBALS['bl'] = $colorv[3];
-                    changecolor($colorv[1],$colorv[2],$colorv[3]);
-                }
-            }
-            if(isset($colorv[3]))
-                {
-                    $e = $colorv[3];
-                    $response .= $e;
-                    $response .="\n";
-                }else{
-                    $response .="Need one more\n\n";
-                }
-
-            socket_write($client, $response);
-            socket_close($client);
-            
-    }elseif (strstr(strtolower($output), '-yard')) 
-    {
-        $yp = explode(",", $output);
-            if (isset($yp[1])) {
-                echo "Yardlight Power " .$yp[1] ."\n";
-                yardlight($yp[1]);
-            }else{
-                echo "Yardlight NO Power\n";
-            }
-    }else{
-        switch (strtolower($output)) {
+    //$output = ereg_replace("[ \t\n\r]","",$input);
+    $output = explode(" ", $input);
+    
+    
+        switch (strtolower($output[0])) {
             case 'white':
                 $response = "Turn on white\n\n";
                 socket_write($client, $response);
                 socket_close($client);
+                break;
+            case '-get':
+                    if (isset($output[1])) 
+                    {
+                        switch(strtolower($output[1]))
+                        {
+                            case 'sd':
+                                    $response = "Strobe Duration " .$GLOBALS['strobedelay'] ."\n";
+                                    socket_write($client, $response,strlen($response));
+                                    socket_close($client);
+                                break;
+                        }
+                    }else{
+                        $response = shwhelp();
+                        socket_write($client, $response,strlen($response));
+                        socket_close($client);
+                    }
+                break;
+            case '-yard':
+            case '-y':
+                if (isset($output[1])) 
+                {
+                    yardlight($output[1]);
+                }else{
+                    $response = "Missing power number 0-10\n";
+                    socket_write($client, $response);
+                    socket_close($client);
+                }
+                break; 
+            case '-color';
+            case '-c';
+                echo "In Color Case\n";
+                echo "OUTPUT 1 " .$output[1] ."\n";
+                if (isset($output[1])) 
+                {
+                    echo "COLOR SET\n";
+                    $colorv = explode(",", $output[1]);
+                    echo "SIZE COLORV " .sizeof($colorv);
+                    if (sizeof($colorv) == 3) 
+                    {
+                        $GLOBALS['rl'] = $colorv[0];
+                        $GLOBALS['gl'] = $colorv[1];
+                        $GLOBALS['bl'] = $colorv[2];
+                        changecolor($colorv[0],$colorv[1],$colorv[2]);
+                    }   
+                }
+                break;
+                case '-setcolor';
+                echo "In SetColor Case\n";
+                if (isset($output[1])) 
+                {
+                    $colorv = explode(",", $output[1]);
+                    if (sizeof($colorv) == 3) 
+                    {
+                        $response = "Color Set to\n";
+                        $response .="R " .$colorv[0] ." G " .$colorv[1] ." B " .$colorv[2];
+                        socket_write($client, $response);
+                        socket_close($client);
+                        readini($GLOBALS['inifile']);
+                        $GLOBALS['rl'] = $colorv[0];
+                        $GLOBALS['gl'] = $colorv[1];
+                        $GLOBALS['bl'] = $colorv[2];
+                        
+                        $GLOBALS['ini_array']['color']['r']=$GLOBALS['rl'];
+                        $GLOBALS['ini_array']['color']['g']=$GLOBALS['gl'];
+                        $GLOBALS['ini_array']['color']['b']=$GLOBALS['bl'];
+                        $result = write_ini_file($GLOBALS['ini_array'],$GLOBALS['inifile']);
+                        
+                    }   
+                }
+                break;
+            case '-red';
+                        $GLOBALS['rl'] = 10;
+                        $GLOBALS['gl'] = 0;
+                        $GLOBALS['bl'] = 0;
+                        changecolor($GLOBALS['rl'],$GLOBALS['gl'],$GLOBALS['bl']);
                 break;
             case 'test':
                 $response = "Testing\n\n";
@@ -191,21 +237,19 @@ function checksock()
                 socket_close($client);
                 looptest();
                 break;
-            case 'fade':
-                $response = "Testing\n\n";
+            case '-fade':
+            case '-f':
+                $response = "Fading\n\n";
                 socket_write($client, $response);
                 socket_close($client);
                 randomlight();
                 break;    
             case '-strobe':
-                $response = "Testing\n\n";
+                $response = "Strobing\n\n";
                 socket_write($client, $response);
                 socket_close($client);
                 strobeII();
                 break;        
-            case '-yard':
-                # code...
-                break;
             case 'kill':
                 $response = "Killing\n\n";
                 socket_write($client, $response);
@@ -217,16 +261,17 @@ function checksock()
                 $GLOBALS['stop'] = true;
                 break;    
             case '-stop':
+                $response = "Stopping\n";
+                socket_write($client, $response);
+                socket_close($client);
                 $GLOBALS['stop'] = true;
                 break;    
             case "--help":
             case "-help":
             case "--h":
             case "-h":
-                var_dump(socket_get_option($GLOBALS['sock'], SOL_SOCKET, SO_SNDBUF));
                 $response = shwhelp();
                 socket_write($client, $response,strlen($response));
-                sleep(1);
                 socket_close($client);
                 break;
             default:
@@ -235,7 +280,6 @@ function checksock()
                 socket_close($client);
                 break;
         }
-    }
     }
     // Display output back to client
 
@@ -585,6 +629,52 @@ $GLOBALS['samprate'] = $ini_array['sensor']['sample_rate'];*/
 //'*******************************************************************************
 
 //'*******************************************************************************
+function write_ini_file($assoc_arr, $path, $has_sections=TRUE) { 
+    $content = ""; 
+    if ($has_sections) { 
+        foreach ($assoc_arr as $key=>$elem) { 
+            $content .= "[".$key."]\n"; 
+            foreach ($elem as $key2=>$elem2) { 
+                if(is_array($elem2)) 
+                { 
+                    for($i=0;$i<count($elem2);$i++) 
+                    { 
+                        $content .= $key2."[] = \"".$elem2[$i]."\"\n"; 
+                    } 
+                } 
+                else if($elem2=="") $content .= $key2." = \n"; 
+                else $content .= $key2." = \"".$elem2."\"\n"; 
+            } 
+        } 
+    } 
+    else { 
+        foreach ($assoc_arr as $key=>$elem) { 
+            if(is_array($elem)) 
+            { 
+                for($i=0;$i<count($elem);$i++) 
+                { 
+                    $content .= $key2."[] = \"".$elem[$i]."\"\n"; 
+                } 
+            } 
+            else if($elem=="") $content .= $key2." = \n"; 
+            else $content .= $key2." = \"".$elem."\"\n"; 
+        } 
+    } 
+
+    if (!$handle = fopen($path, 'w')) { 
+    fclose($handle); 
+        return false; 
+    } 
+    if (!fwrite($handle, $content)) { 
+    fclose($handle);         
+    return false; 
+    } 
+    fclose($handle); 
+    return true; 
+}
+//'*******************************************************************************
+
+//'*******************************************************************************
 function showusage()
 {
     /*echo "rgbsock.php Rev ". $GLOBALS['revmajor'] ."." .$GLOBALS['revminor'] ."\n";*/
@@ -607,17 +697,23 @@ function showusage()
 function shwhelp()
 {
     /*echo "rgbsock.php Rev ". $GLOBALS['revmajor'] ."." .$GLOBALS['revminor'] ."\n";*/
-    $hstring = "rgbsock.php Rev ? \n";
-    $hstring .= "Usage: rgbsock.php [option]...\n Using the Raspberry pi as an RGB LED Controller\n";
+    $hstring = "\nrgbledclient.php Rev 1 \n";
+    $hstring .= "Usage: rgbledclient.php [option]...\n Using the Raspberry pi as an RGB LED Controller\n";
     $hstring .= "Mandatory arguments\n";
     $hstring .= "  -h, \t This help\n";
-    $hstring .= "  -x, \t Turn off all sprinklers\n";
-    $hstring .= "  -z [1-8] [0,1], \t Turn on/off zone\n";
-    $hstring .= "  -c || color ,[.001-10],[.001-10],[.001-10], \t Set and turn on LED - Color values seperated by comma.\n";
-    $hstring .= "  -s [.001-10] [.001-10] [.001-10] [x-duration] [y-count], \t Strobe LED - Color values seperated by space. \n";
-    $hstring .= "  -r, \t Used for debuging from console\n";
-    $hstring .= "  -D, \t Daemon mode usualy called from sprinkd\n";
-    $hstring .= "Zones and pin numbers are set in the sprink.ini file\n";      
+    $hstring .= "  -c || color ,[.001-10],[.001-10],[.001-10],\t Set and turn on LED - Color values seperated by comma.\n";
+    $hstring .= "  -setcolor,[.001-10],[.001-10],[.001-10] \t Sets the color\n";
+    $hstring .= "  -stop, \t Stop the Strobe or the fade\n";
+    $hstring .= "  -strobe [.001-10] [.001-10] [.001-10] [x-duration] [y-count],\t Strobe LED - Color values seperated by space. \n";
+    $hstring .= "  -setstrobe\t Used for seting duration\n";
+    $hstring .= "  -y || -yard, [1-10] \t Turn on yard lights at power 1-10 \n";
+    $hstring .= "  -f || -fade\t Fade random colors\n";
+    $hstring .= "  -setfade\t Sets the fade duration\n";
+    $hstring .= "  -get [option]:\n";
+    $hstring .= "        fd: Fade duration\n";
+    $hstring .= "        sd: Strobe duration\n";
+    $hstring .= "         c: Colors\n";
+    $hstring .= "Pin numbers are set in the " .$GLOBALS['inifile'] ." file\n";      
     $hstring .= "\n\n";
     return $hstring;
 }

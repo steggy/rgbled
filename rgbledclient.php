@@ -5,11 +5,19 @@
 //lets look for arg
 if(sizeof($argv) < 2)
 {
-	echo "Must give arg\n\n";
+	sendcmd('-h');
 	die;
 }
-
-     sendcmd($argv[1]);
+	for($i=1;$i < sizeof($argv); $i++)
+	{
+		if ($i == 1) 
+		{
+			$cstring=$argv[$i];
+		}else{
+			$cstring .= " " .$argv[$i];
+		}
+	} 
+     sendcmd($cstring);
 
 /*switch ($argv[1]) {
     case 'test':
@@ -40,6 +48,7 @@ function sendcmd($cmd)
 	if (!$fp)
 	{
 	$result = "Error: could not open socket connection";
+	$result .= "Check that rgbledsck.php is running";
 	}
 	else
 	{
