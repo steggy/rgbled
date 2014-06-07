@@ -198,6 +198,9 @@ function checksock()
                         $GLOBALS['gl'] = $colorv[1];
                         $GLOBALS['bl'] = $colorv[2];
                         changecolor($colorv[0],$colorv[1],$colorv[2]);
+                        $response = "Color R" .$GLOBALS['rl'] ." G" .$GLOBALS['gl'] ." B" .$GLOBALS['bl'] ."\n";
+                        socket_write($client, $response);
+                        socket_close($client);
                     }   
                 }
                 break;
