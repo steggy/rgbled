@@ -155,6 +155,17 @@ function checksock()
                 socket_write($client, $response);
                 socket_close($client);
                 break;
+            case '-setstrobe':
+                if (isset($output[1])) 
+                {
+                    $GLOBALS['strobedelay'] = $output[1];
+                    $GLOBALS['ini_array']['strobe']['delay'] = $GLOBALS['strobedelay'];
+                    write_ini_file($GLOBALS['ini_array'],$GLOBALS['inifile']);
+                    $response = "Strobe Duration " .$GLOBALS['strobedelay'] ."\n";
+                    socket_write($client, $response,strlen($response));
+                    socket_close($client);
+                }
+                break;
             case '-get':
                     if (isset($output[1])) 
                     {
@@ -264,7 +275,9 @@ function checksock()
                 $GLOBALS['stop'] = true;
                 break;    
             case '-stop':
+                 alloff();
                 $response = "Stopping\n";
+               
                 socket_write($client, $response);
                 socket_close($client);
                 $GLOBALS['stop'] = true;
@@ -487,7 +500,7 @@ function strobe($r,$g,$b,$d,$t)
 //'*******************************************************************************
 function strobeII()
 {
-$d=$GLOBALS['ini_array']['strobe']['delay'];  
+$d=$GLOBALS['strobedelay'];  
 echo "STROBE DELAY " .$d ."\n";  
 $r = $GLOBALS['rl'];
 $g = $GLOBALS['gl'];
@@ -596,6 +609,18 @@ function changecolor($r,$g,$b)
 
 //'*******************************************************************************
 function daemoncolor($r,$g,$b)
+{
+    $outr = "echo \"" .$GLOBALS['redpin'] ."=" .$r / 10 ."\" > /dev/pi-blaster";
+    $outg = "echo \"" .$GLOBALS['greenpin'] ."=" .$g / 10 ."\" > /dev/pi-blaster";
+    $outb = "echo \"" .$GLOBALS['bluepin'] ."=" .$b / 10 ."\" > /dev/pi-blaster";
+    $result = shell_exec($outr);
+    $result = shell_exec($outg);
+    $result = shell_exec($outb);
+}
+//'*******************************************************************************
+
+//'*******************************************************************************
+function alloff($r=0,$g=0,$b=0)
 {
     $outr = "echo \"" .$GLOBALS['redpin'] ."=" .$r / 10 ."\" > /dev/pi-blaster";
     $outg = "echo \"" .$GLOBALS['greenpin'] ."=" .$g / 10 ."\" > /dev/pi-blaster";
