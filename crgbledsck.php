@@ -45,16 +45,16 @@
 <style>
 body {
 font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
-font-size: 162.5%;
+/*font-size: 162.5%;*/
 background-color:cyan;
 }
 button
 {
-width:160px;
-height:100px;
-font-size:40px;
--moz-border-radius: 15px;
--webkit-border-radius: 15px;
+/*width:160px;
+height:100px;*/
+/*font-size:40px;*/
+-moz-border-radius: 5px;
+-webkit-border-radius: 5px;
 /*border: 5px solid #009900;*/
 
 border:1px solid gray;
@@ -66,11 +66,11 @@ padding: 5px;
 
 select
 {
-width:75px;
+/*width:75px;
 height:100px;
-font-size:40px;
--moz-border-radius: 15px;
--webkit-border-radius: 15px;
+font-size:40px;*/
+-moz-border-radius: 5px;
+-webkit-border-radius: 5px;
 /*border: 5px solid #009900;*/
 
 border:1px solid gray;
@@ -104,11 +104,12 @@ top:100px;
 left:250px;*/
 }
 </style>
+<meta name="viewport" content="width=device-width">
     </head>
 <body onload="mm('status');">
 
 
-<div id="div0">RGB LED Control</div><div id=div1></div>
+<div id="div0">RGB LED Socket Control</div><div id=div1></div>
 
 <br>
 <button id="button2" onclick="mm('status')">RGB STATUS</button>
@@ -117,17 +118,17 @@ left:250px;*/
 <button id="button2" onclick="mm('restart')">RESTART RGB</button>
 
 <br><br>
-<button id="button2" onclick="mm('fade')">FADE</button>
+<button id="button2" onclick="mm('-fade')">FADE</button>
 
-<button id="button2" onclick="mm('off')">OFF</button>
+<button id="button2" onclick="mm('-stop')">OFF</button>
+<button id="button2" style="background-color:white;" onclick="mm('strobe')">STROBE</button>
 <br><br>
 <button id="button2" style="background-color:red;" onclick="mm('-red')">RED</button>
 <button id="button2" style="background-color:green;" onclick="mm('-green')">GREEN</button>
 <button id="button2" style="background-color:blue;" onclick="mm('-blue')">BLUE</button>
-<br><br>
-<button id="button2" style="background-color:purple;" onclick="mm('purple')">PURPLE</button>
-<button id="button2" style="background-color:white;" onclick="mm('strobe')">STROBE</button>
-<button id="button2" style="background-color:cyan;" onclick="mm('peri')">PERI</button>
+<button id="button2" style="background-color:purple;" onclick="mm('-purple')">PURPLE</button>
+
+<button id="button2" style="background-color:cyan;" onclick="mm('-peri')">PERI</button>
 
 <br><br>
 <button id="button2" onclick="mm('-color')">color</button>
@@ -170,7 +171,7 @@ for($i=1;$i < 11; $i++)
     <button id="button2" style="background-color:white;" onclick="ww('whiteoff')">WHITE OFF</button>
 <br>
 <button id="button2" style="background-color:white;" onclick="mm('-help')">HELP</button>
-<br>
+<br><br>
 
 <?=$_SERVER['HTTP_HOST']?>
 

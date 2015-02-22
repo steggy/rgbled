@@ -8,6 +8,7 @@
 global $address;
 global $port;
 global $sock;
+global $status;
 global $debug;
 global $stop;
 global $inifile;
@@ -24,12 +25,15 @@ global $count;
 global $count2;
 global $randcolorpause;
 global $fadepause;
-global $debugmode;
+global $pid;
 
+global $basedir;
+$GLOBALS['basedir'] = "/var/www/rgbled";
 
 $GLOBALS['cmd'] = '';
 $GLOBALS['count'] = 0;
 $GLOBALS['count2'] = 0;
+$GLOBALS['pid'] = 0;
 
 $GLOBALS['inifile']= "/var/www/rgbled/rgbled.ini";
 $GLOBALS['cmdinifile'] = "/var/www/rgbled/rgbledcmd.ini";
@@ -43,17 +47,30 @@ $bl = '0';
 $orl = '99';
 $ogl = '99';
 $obl = '99';
+require("/var/www/rgbled/cli_changecolor.php");
+require("/var/www/rgbled/cli_readini.php");
+
+register_shutdown_function( 'shutdown');
+
+declare(ticks = 1);
+
+pcntl_signal(SIGINT, function() {
+    echo "\n\nCaught SIGINT\n";
+    //socket_close($GLOBALS['sock']);
+    die;
+});
+
 
 readini($GLOBALS['inifile']);
 if (isset($argv[1])) 
 {
 switch ($argv[1]) {
-    case '-r':
+    case 'r':
         setsock();
         $GLOBALS['debug'] = true;
         maindebug();
         break;
-    case '-D':
+    case 'D':
         setsock();
         $GLOBALS['debug'] = false;
         main();
@@ -155,6 +172,12 @@ function checksock()
                 socket_write($client, $response);
                 socket_close($client);
                 break;
+            case '-status':
+                //$GLOBALS['status'];
+                $response = $GLOBALS['status'] ."\n\n";
+                socket_write($client, $response);
+                socket_close($client);
+                break;
             case '-setstrobe':
                 if (isset($output[1])) 
                 {
@@ -175,6 +198,15 @@ function checksock()
                                     $response = "Strobe Duration " .$GLOBALS['strobedelay'] ."\n";
                                     socket_write($client, $response,strlen($response));
                                     socket_close($client);
+                                break;
+                            case 'c':
+                            case 'C':
+                                $response = "Colors ";
+                                $response .= "Red > " .$GLOBALS['rl'];
+                                $response .= " Green > " .$GLOBALS['gl'];
+                                $response .= " Blue > " .$GLOBALS['bl'] ."\n";
+                                socket_write($client, $response,strlen($response));
+                                socket_close($client);
                                 break;
                         }
                     }else{
@@ -208,6 +240,11 @@ function checksock()
                         $GLOBALS['rl'] = $colorv[0];
                         $GLOBALS['gl'] = $colorv[1];
                         $GLOBALS['bl'] = $colorv[2];
+                        $GLOBALS['ini_array']['color']['r']=$GLOBALS['rl'];
+                        $GLOBALS['ini_array']['color']['g']=$GLOBALS['gl'];
+                        $GLOBALS['ini_array']['color']['b']=$GLOBALS['bl'];
+                        $result = write_ini_file($GLOBALS['ini_array'],$GLOBALS['inifile']);
+                        killproc();
                         changecolor($colorv[0],$colorv[1],$colorv[2]);
                         $response = "Color R" .$GLOBALS['rl'] ." G" .$GLOBALS['gl'] ." B" .$GLOBALS['bl'] ."\n";
                         socket_write($client, $response);
@@ -226,7 +263,7 @@ function checksock()
                         $response .="R " .$colorv[0] ." G " .$colorv[1] ." B " .$colorv[2];
                         socket_write($client, $response);
                         socket_close($client);
-                        readini($GLOBALS['inifile']);
+                        //readini($GLOBALS['inifile']);
                         $GLOBALS['rl'] = $colorv[0];
                         $GLOBALS['gl'] = $colorv[1];
                         $GLOBALS['bl'] = $colorv[2];
@@ -239,12 +276,7 @@ function checksock()
                     }   
                 }
                 break;
-            case '-red';
-                        $GLOBALS['rl'] = 10;
-                        $GLOBALS['gl'] = 0;
-                        $GLOBALS['bl'] = 0;
-                        changecolor($GLOBALS['rl'],$GLOBALS['gl'],$GLOBALS['bl']);
-                break;
+            
             case 'test':
                 $response = "Testing\n\n";
                 socket_write($client, $response);
@@ -253,16 +285,26 @@ function checksock()
                 break;
             case '-fade':
             case '-f':
+                killproc();
+                $GLOBALS['status'] = "Fading";
                 $response = "Fading\n\n";
                 socket_write($client, $response);
                 socket_close($client);
-                randomlight();
+                $command =  $GLOBALS['basedir'] .'/rgbfade.php' . ' > /dev/null 2>&1 & echo $!; ';
+                echo $command;
+                $pid = exec($command, $output);
+                $GLOBALS['pid'] = $pid;
                 break;    
             case '-strobe':
+                $GLOBALS['status'] = "Strobe";
+                $GLOBALS['stop'] = TRUE;
+                killproc();
+                $command =  $GLOBALS['basedir'] .'/rgbstrobe.php' . ' > /dev/null 2>&1 & echo $!; ';
+                $pid = exec($command, $output);
+                $GLOBALS['pid'] = $pid;
                 $response = "Strobing\n\n";
                 socket_write($client, $response);
                 socket_close($client);
-                strobeII();
                 break;        
             case 'kill':
                 $response = "Killing\n\n";
@@ -275,9 +317,9 @@ function checksock()
                 $GLOBALS['stop'] = true;
                 break;    
             case '-stop':
+                killproc();
                  alloff();
                 $response = "Stopping\n";
-               
                 socket_write($client, $response);
                 socket_close($client);
                 $GLOBALS['stop'] = true;
@@ -291,20 +333,33 @@ function checksock()
                 socket_close($client);
                 break;
             default:
-                $response = "default\n\n";
+                $response = "Default:\n\n" .shwhelp();
                 socket_write($client, $response);
                 socket_close($client);
                 break;
         }
     }
-    // Display output back to client
-
-    //socket_write($client, $response);
-
-    // Close the client (child) socket
-
-    //socket_close($client);
+    
 }
+
+//'*******************************************************************************
+function killproc()
+{
+    if($GLOBALS['pid'] != 0)
+        {
+            $rus = exec("kill " .$GLOBALS['pid']);
+            $GLOBALS['pid'] = 0;
+        }
+    alloff();
+}
+//'*******************************************************************************
+
+//'*******************************************************************************
+function shutdown()
+{
+    killproc();
+}
+//'*******************************************************************************
 
 //'*******************************************************************************
 function looptest()
@@ -323,230 +378,18 @@ function looptest()
 }
 //'*******************************************************************************
 
+
 //'*******************************************************************************
-function randomlight()
+function checkstop()
 {
-    while(true)
-    {       
-        //echo(rand(0,10) / 100);
-        //echo "\n";
-
-        if($GLOBALS['count'] == 10)
-        {
-            $GLOBALS['count'] = 0;
-            $GLOBALS['count2']++;
-        }
-        switch($GLOBALS['count2'])
-        {
-            case 0:
-                $rl = rand(0,10);
-                $gl = '0';
-                $bl = rand(0,10);
-                break;
-            case 1:
-                $rl = rand(0,10);
-                $gl = rand(0,10);
-                $bl = '0';
-                break;
-            case 2:
-                $rl = '0';
-                $gl = rand(0,10);
-                $bl = rand(0,10);
-                break;
-            default;
-                $GLOBALS['count2'] = 0;
-        }
-
-        /*if(!$orl == '0' && !$ogl == '0' && !$obl == '0')
-        {
-            //if orl is less then rl count down else count up
-        }else{*/
-        if ($GLOBALS['debugmode'] == '1') 
-        {
-            echo "Red = " .$rl ." green = " .$gl ." Blue = " .$bl ."\n\n";
-            echo "FADED\n";
-        }
-        
-        fade($rl,$gl,$bl);
-        $GLOBALS['count']++;
-        sleep($GLOBALS['randcolorpause']);
-        //readcmdini($GLOBALS['cmdinifile']);
-        checksock();
-        if($GLOBALS['stop'])
+    if($GLOBALS['stop'])
             {
-                $GLOBALS['stop'] = false;
-                return;
+                $GLOBALS['stop'] = FALSE;
+                return TRUE;
             }
-        switch (strtolower($GLOBALS['cmdini_array']['command']['cmd'])) 
-        {
-            case 'white':
-                yardlight();
-                break;
-            case 'stop':
-            case 'color':
-                return;
-                break;
-            default:
-                # code...
-                break;
-        }
-        //if(strtolower($GLOBALS['cmdini_array']['command']['cmd']) == 'stop'){return;}
-        /*}*/
-    }
 }
 //'*******************************************************************************
 
-
-//'*******************************************************************************
-function fade($r,$g,$b)
-{
-$stopfade = 0;
-$rstop = 0;
-$gstop = 0;
-$bstop = 0;
-$step = .1;
-if($r == 0){$rstop = 1;}
-if($g == 0){$gstop = 1;}
-if($b == 0){$bstop = 1;}
-
-    if($GLOBALS['orl'] == '99')
-    {
-        $GLOBALS['orl'] = $r;
-        $GLOBALS['ogl'] = $g;
-        $GLOBALS['obl'] = $b;
-        changecolor($r,$g,$b);
-    }else{
-        //echo updown($GLOBALS['orl'],$r) ."\n";
-        $rd = updown($GLOBALS['orl'],$r);
-        $gd = updown($GLOBALS['ogl'],$g);
-        $bd = updown($GLOBALS['obl'],$b);
-        while($stopfade == 0)
-        {
-            if($GLOBALS['orl'] == $r && $GLOBALS['ogl'] == $g && $GLOBALS['obl'] == $b)
-            {
-                $stopfade = 1;
-            }else{
-                if($rd == 0)
-                {
-                    if($GLOBALS['orl'] != $r)
-                    {
-                        $GLOBALS['orl'] = $GLOBALS['orl'] - 1;
-                    }
-                }else{
-                    if($GLOBALS['orl'] != $r)
-                    {
-                        $GLOBALS['orl'] = $GLOBALS['orl'] + 1;
-                    }
-                    
-                }
-                if($gd == 0)
-                {
-                    if($GLOBALS['ogl'] != $g)
-                    {
-                        $GLOBALS['ogl'] = $GLOBALS['ogl'] - 1;
-                    }
-                }else{
-                    if($GLOBALS['ogl'] != $g)
-                    {
-                        $GLOBALS['ogl'] = $GLOBALS['ogl'] + 1;
-                    }
-                    
-                }
-                if($bd == 0)
-                {
-                    if($GLOBALS['obl'] != $b)
-                    {
-                        $GLOBALS['obl'] = $GLOBALS['obl'] - 1;
-                    }
-                }else{
-                    if($GLOBALS['obl'] != $b)
-                    {
-                        $GLOBALS['obl'] = $GLOBALS['obl'] + 1;
-                    }
-                    
-                }
-
-                //echo "FDADE R = " .$r ." OR = " .$GLOBALS['orl'] ." ";
-                //echo "G = " .$g ." OG = " .$GLOBALS['ogl'] ." ";
-                //echo "B = " .$b ." OB = " .$GLOBALS['obl'] ."\n";
-                changecolor($GLOBALS['orl'],$GLOBALS['ogl'],$GLOBALS['obl']);
-            }
-        usleep($GLOBALS['fadepause']); //2000000 = 2 sec
-        }
-        $GLOBALS['orl'] = $r;
-        $GLOBALS['ogl'] = $g;
-        $GLOBALS['obl'] = $b;
-
-        
-    }
-}
-//'*******************************************************************************
-
-//'*******************************************************************************
-function strobe($r,$g,$b,$d,$t)
-{
-    echo "THIS IS T " .$t ."\n";
-    for($i =0; $i < $t; $i++)
-    {
-        changecolor($r,$g,$b);
-        usleep($d/2);
-        changecolor(0,0,0);
-        usleep($d/2);
-    
-    }
-}
-//'*******************************************************************************
-
-//'*******************************************************************************
-function strobeII()
-{
-$d=$GLOBALS['strobedelay'];  
-echo "STROBE DELAY " .$d ."\n";  
-$r = $GLOBALS['rl'];
-$g = $GLOBALS['gl'];
-$b = $GLOBALS['bl'];
-  
-    while(true)
-    {
-        changecolor($r,$g,$b);
-        usleep($d/2);
-        changecolor(0,0,0);
-        usleep($d/2);
-        //readcmdini($GLOBALS['cmdinifile']);
-        checksock();
-        if($GLOBALS['stop'])
-            {
-                $GLOBALS['stop'] = false;
-                return;
-            }
-        switch(strtolower($GLOBALS['cmdini_array']['command']['cmd']))
-        {
-            
-            case 'white':
-                yardlight();
-                break;
-            case 'stop':
-            case 'color':
-                return;
-                break;  
-        }
-        
-    
-    }
-}
-//'*******************************************************************************
-
-//'*******************************************************************************
-function updown($o,$n)
-{
-    if($o > $n)
-    {
-        return 0;
-    }else{
-        return 1;
-    }
-}
-//'*******************************************************************************
 
 //'*******************************************************************************
 function yardlight($p)
@@ -575,49 +418,7 @@ function yardlight($p)
 }
 //'*******************************************************************************
 
-//'*******************************************************************************
-function debugcolor($r,$g,$b)
-{
-    //When debuging without pi-blaster use this function
-    //change this function's name to changecolor then change the next function down to changecolorI
-    //You will need to reverse this when using pi-blaster
-    $outr = "echo \"" .$GLOBALS['redpin'] ."=" .$r / 10 ."\" > /dev/pi-blaster";
-    $outg = "echo \"" .$GLOBALS['greenpin'] ."=" .$g / 10 ."\" > /dev/pi-blaster";
-    $outb = "echo \"" .$GLOBALS['bluepin'] ."=" .$b / 10 ."\" > /dev/pi-blaster";
-    //debug without pi-blaster
-    echo "\"" .$GLOBALS['redpin'] ."=" .$r / 10 ."\"";
-    echo "\"" .$GLOBALS['greenpin'] ."=" .$g / 10 ."\"";
-    echo "\"" .$GLOBALS['bluepin'] ."=" .$b / 10 ."\"";
-    echo "\n\n";
-    
-}
-//'*******************************************************************************
 
-//'*******************************************************************************
-function changecolor($r,$g,$b)
-{
-    if ($GLOBALS['debug']) 
-    {
-        debugcolor($r,$g,$b);
-
-    }else{
-        daemoncolor($r,$g,$b);
-
-    }
-}
-//'*******************************************************************************
-
-//'*******************************************************************************
-function daemoncolor($r,$g,$b)
-{
-    $outr = "echo \"" .$GLOBALS['redpin'] ."=" .$r / 10 ."\" > /dev/pi-blaster";
-    $outg = "echo \"" .$GLOBALS['greenpin'] ."=" .$g / 10 ."\" > /dev/pi-blaster";
-    $outb = "echo \"" .$GLOBALS['bluepin'] ."=" .$b / 10 ."\" > /dev/pi-blaster";
-    $result = shell_exec($outr);
-    $result = shell_exec($outg);
-    $result = shell_exec($outb);
-}
-//'*******************************************************************************
 
 //'*******************************************************************************
 function alloff($r=0,$g=0,$b=0)
@@ -631,30 +432,7 @@ function alloff($r=0,$g=0,$b=0)
 }
 //'*******************************************************************************
 
-//'*******************************************************************************
-function readini($file)
-{
-if (!file_exists($file)) {
-    echo "*********************************************\nrgbled.php\nFile not found: " .$file ."\n\n";
-    die;
-}
-$GLOBALS['ini_array'] = parse_ini_file($file,true);
-$GLOBALS['redpin'] = $GLOBALS['ini_array']['pins']['red'];
-$GLOBALS['greenpin'] = $GLOBALS['ini_array']['pins']['green'];
-$GLOBALS['bluepin'] = $GLOBALS['ini_array']['pins']['blue'];
-$GLOBALS['whitepin'] = $GLOBALS['ini_array']['pins']['white'];
-$GLOBALS['strobedelay'] = $GLOBALS['ini_array']['strobe']['delay'];
-$GLOBALS['cmd'] = $GLOBALS['ini_array']['command']['stop'];
-$GLOBALS['randcolorpause'] = $GLOBALS['ini_array']['randomcolor']['dur'];
-$GLOBALS['fadepause'] = $GLOBALS['ini_array']['randomcolor']['fade'];
-$GLOBALS['rl'] = $GLOBALS['ini_array']['color']['r'];
-$GLOBALS['gl'] = $GLOBALS['ini_array']['color']['g'];
-$GLOBALS['bl'] = $GLOBALS['ini_array']['color']['b'];
-/*$GLOBALS['dbhost'] = $ini_array['database']['dbhost'];
-$GLOBALS['sname'] = $ini_array['sensor']['name'];
-$GLOBALS['samprate'] = $ini_array['sensor']['sample_rate'];*/
-}
-//'*******************************************************************************
+
 
 //'*******************************************************************************
 function write_ini_file($assoc_arr, $path, $has_sections=TRUE) { 
