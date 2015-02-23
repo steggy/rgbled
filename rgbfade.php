@@ -16,13 +16,14 @@ global $bluepin;
 global $randcolorpause;
 global $debug;
 global $basedir;
+$GLOBALS['basedir'] = getenv("RGB_LED_HOME");
 
 $GLOBALS['debug'] = 0;
 $GLOBALS['count'] = 0;
 $GLOBALS['count2'] = 0;
-$GLOBALS['basedir']= "/var/www/rgbled";
 
-$GLOBALS['inifile']= "/var/www/rgbled/rgbled.ini";
+
+$GLOBALS['inifile']= $GLOBALS['basedir'] ."/rgbled.ini";
 require($GLOBALS['basedir'] ."/cli_changecolor.php");
 require($GLOBALS['basedir'] ."/cli_readini.php");
 readini($GLOBALS['inifile']);

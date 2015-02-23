@@ -7,7 +7,7 @@ error_reporting(E_ALL);
 
 global $cmdinifile;
 global $ini_array;
-$app = "sudo /home/steggy/bin/rgbled/rgbledclient.php";	
+$app = "sudo /var/www/rgbled/rgbledclient.php";	
 
 if(isset($_GET['ss']))
 {
@@ -20,12 +20,23 @@ if(isset($_POST['ss']))
 //echo $_POST['ss']; 
 switch(strtolower($_POST['ss']))
 {
-	case "-stop":
-		$result = shell_exec($app ." -stop");
-		echo $result;
+	case "status":
+		$result = shell_exec('pgrep rgbledsck.php');
+		if($result != 0 )
+		{
+			echo "Running";
+		}else{
+			echo "Not Running";
+		}
 		break;
+	case "-stop":
 	case "-help":
-		$result = shell_exec($app ." -h");
+	case "-f":
+	case "-fade":
+	case "-strobe":
+	case "-wigwag":
+	case "-temp":
+		$result = shell_exec($app ." " .strtolower($_POST['ss']));
 		echo $result;
 		break;
 	case "-red":
@@ -47,16 +58,7 @@ switch(strtolower($_POST['ss']))
 	case "-peri":
 			$result = shell_exec($app ." -c 5,5,10");
 			echo $result;	
-			break;				
-	case "-f":
-	case "-fade":
-		$result = shell_exec($app ." -f");
-		echo $result;	
-		break;
-	case "strobe":
-		$result = shell_exec($app ." -strobe");
-		echo $result;	
-		break;	
+			break;					
 	case "-color":
 	case "-c":
 		//echo "in case";

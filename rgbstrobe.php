@@ -13,9 +13,10 @@ global $greenpin;
 global $bluepin;
 global $randcolorpause;
 global $basedir;
-$GLOBALS['basedir']= "/var/www/rgbled";
+$GLOBALS['basedir'] = getenv("RGB_LED_HOME");
 
-$GLOBALS['inifile']= "/var/www/rgbled/rgbled.ini";
+
+$GLOBALS['inifile']= $GLOBALS['basedir'] ."/rgbled.ini";
 require($GLOBALS['basedir'] ."/cli_readini.php");
 readini($GLOBALS['inifile']);
 strobeII();

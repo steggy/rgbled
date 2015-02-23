@@ -26,17 +26,22 @@ global $count2;
 global $randcolorpause;
 global $fadepause;
 global $pid;
-
+global $hourtmr;
+global $last;
+global $hourct;
 global $basedir;
-$GLOBALS['basedir'] = "/var/www/rgbled";
+$GLOBALS['basedir'] = getenv("RGB_LED_HOME");
 
 $GLOBALS['cmd'] = '';
 $GLOBALS['count'] = 0;
 $GLOBALS['count2'] = 0;
 $GLOBALS['pid'] = 0;
+$GLOBALS['hourct'] = 0;
+$GLOBALS['hourtmr'] = 0;
+$GLOBALS['last'] = "";
 
-$GLOBALS['inifile']= "/var/www/rgbled/rgbled.ini";
-$GLOBALS['cmdinifile'] = "/var/www/rgbled/rgbledcmd.ini";
+$GLOBALS['inifile']= $GLOBALS['basedir'] ."/rgbled.ini";
+$GLOBALS['cmdinifile'] = $GLOBALS['basedir'] ."/rgbledcmd.ini";
 
 $GLOBALS['debug'] = true;
 $GLOBALS['stop'] = false;
@@ -66,11 +71,13 @@ if (isset($argv[1]))
 {
 switch ($argv[1]) {
     case 'r':
+        setenvi();
         setsock();
         $GLOBALS['debug'] = true;
         maindebug();
         break;
     case 'D':
+        setenvi();
         setsock();
         $GLOBALS['debug'] = false;
         main();
@@ -83,6 +90,20 @@ switch ($argv[1]) {
     showusage();
     exit;
 }
+
+
+/*************************************/
+function setenvi()
+{
+    echo "Setting env\n";
+    echo putenv("RGBLEDSTROBE=" .$GLOBALS['strobedelay']);
+    echo "\nYou set\n";
+    echo getenv("RGBLEDSTROBE");
+    echo "\nRed Pin\n";
+    echo getenv("RGB_LED_HOME");
+}
+/*************************************/
+
 /*************************************/
 function setsock()
 {
@@ -119,6 +140,7 @@ $STDERR = fopen('/var/log/rgblederror.log', 'wb');
     while (true) 
     {    
         checksock(); 
+        usleep(4000);
     }
 // Close the master sockets
 socket_close($GLOBALS['sock']);
@@ -129,9 +151,12 @@ socket_close($GLOBALS['sock']);
 /*************************************/
 function maindebug()
 {
+    $c = 0;
     while (true) 
     {    
         checksock(); 
+        //echo "Check " .$c++ ."\n";
+        usleep(4000);
     }
 // Close the master sockets
 socket_close($GLOBALS['sock']);
@@ -141,6 +166,14 @@ socket_close($GLOBALS['sock']);
 
 function checksock()
 {
+    
+
+    if($GLOBALS['hourtmr'] > 0)
+    {
+        echo "Hour timer val " .$GLOBALS['hourtmr'] ."\n";
+        flashhour();
+    }
+
     /* Accept incoming requests and handle them as child processes */
 
     $client = @socket_accept($GLOBALS['sock']);
@@ -157,12 +190,13 @@ function checksock()
 
     // Strip all white spaces from input
     echo "RAW " .$input ."\n";
+    
+
     if($input == '')
     {
         break;
     }
-    //$output = ereg_replace("[ \t\n\r]","",$input).chr(0);
-    //$output = ereg_replace("[ \t\n\r]","",$input);
+    
     $output = explode(" ", $input);
     
     
@@ -176,6 +210,11 @@ function checksock()
                 //$GLOBALS['status'];
                 $response = $GLOBALS['status'] ."\n\n";
                 socket_write($client, $response);
+                socket_close($client);
+                break;
+            case '-config':
+                $config = showconfig();
+                socket_write($client, $config);
                 socket_close($client);
                 break;
             case '-setstrobe':
@@ -245,6 +284,7 @@ function checksock()
                         $GLOBALS['ini_array']['color']['b']=$GLOBALS['bl'];
                         $result = write_ini_file($GLOBALS['ini_array'],$GLOBALS['inifile']);
                         killproc();
+                        $GLOBALS['status'] = "Solid Color";
                         changecolor($colorv[0],$colorv[1],$colorv[2]);
                         $response = "Color R" .$GLOBALS['rl'] ." G" .$GLOBALS['gl'] ." B" .$GLOBALS['bl'] ."\n";
                         socket_write($client, $response);
@@ -305,7 +345,36 @@ function checksock()
                 $response = "Strobing\n\n";
                 socket_write($client, $response);
                 socket_close($client);
-                break;        
+                break;  
+            case '-temp':
+                $response = gettemp();
+                socket_write($client, $response);
+                socket_close($client);
+                break;    
+            case '-wigwag':
+                $GLOBALS['stop'] = TRUE;
+                killproc();
+                if (isset($output[1])) 
+                    {
+                        $response = "Hour\n";
+                        socket_write($client, $response);
+                        socket_close($client);
+                        flashhour(1);
+                        //$scmd = "/rgbwigwag.php 1";
+                        //$GLOBALS['status'] = "Hour";
+
+                        break;
+                    }else{
+                        $scmd = "/rgbwigwag.php";
+                        $GLOBALS['status'] = "WigWag";
+                        $command =  $GLOBALS['basedir'] .$scmd . ' > /dev/null 2>&1 & echo $!; ';
+                        $pid = exec($command, $output);
+                        $GLOBALS['pid'] = $pid;
+                        $response = "WigWaging\n";
+                        socket_write($client, $response);
+                        socket_close($client);
+                    }
+                break;            
             case 'kill':
                 $response = "Killing\n\n";
                 socket_write($client, $response);
@@ -341,6 +410,84 @@ function checksock()
     }
     
 }
+//'*******************************************************************************
+function showconfig()
+{
+    $config = "RGB LED Config\n";
+    $config .= "Pins:\n";
+    $config .= "  Red " .$GLOBALS['redpin'] ."\n";
+    $config .= "  Green " .$GLOBALS['greenpin'] ."\n";
+    $config .= "  Blue " .$GLOBALS['bluepin'] ."\n"; 
+    return $config;
+    
+     
+}
+//'*******************************************************************************
+
+//'*******************************************************************************
+function flashhour($s=0)
+{
+    if($s > 0) //start timer
+    {
+        echo "Starting hour\n";
+        $GLOBALS['hourtmr'] = 1;
+        $GLOBALS['last'] = $GLOBALS['status'];
+        $scmd = "/rgbwigwag.php";
+        $GLOBALS['status'] = "Hour";
+        $command =  $GLOBALS['basedir'] .$scmd . ' > /dev/null 2>&1 & echo $!; ';
+        $pid = exec($command, $output);
+        $GLOBALS['pid'] = $pid;
+    }else if($GLOBALS['hourct'] > 3000){
+        killproc();
+        $GLOBALS['hourct'] = 0;
+        $GLOBALS['hourtmr'] = 0;
+        switch(strtolower($GLOBALS['last']))
+        {
+            case "fading":
+                $command =  $GLOBALS['basedir'] .'/rgbfade.php' . ' > /dev/null 2>&1 & echo $!; ';
+                echo $command;
+                $pid = exec($command, $output);
+                $GLOBALS['pid'] = $pid;
+                $GLOBALS['status'] = "Fading";
+            break;
+            case "strobe":
+                $command =  $GLOBALS['basedir'] .'/rgbstrobe.php' . ' > /dev/null 2>&1 & echo $!; ';
+                $pid = exec($command, $output);
+                $GLOBALS['pid'] = $pid;
+                $GLOBALS['status'] = "Srobe";
+                break;
+            case "solid color":
+                changecolor($GLOBALS['rl'],$GLOBALS['gl'],$GLOBALS['bl']);
+                $GLOBALS['status'] = "Solid Color";
+                break;  
+            default;
+                  $GLOBALS['status'] = "";
+        }
+    }
+    $GLOBALS['hourct']++;
+    echo "Hour count " .$GLOBALS['hourct'] ."\n";
+
+
+}
+//'*******************************************************************************
+
+
+//'*******************************************************************************
+function gettemp()
+{
+    $jsonurl = "http://api.openweathermap.org/data/2.5/weather?q=usa,tracy,ca";
+    $json = file_get_contents($jsonurl);
+
+    $weather = json_decode($json);
+    $kelvin = $weather->main->temp;
+    //$celcius = $kelvin - 273.15;
+    $k_2_f = (($kelvin - 273.15) * 9 / 5) + 32;
+ 
+    return round($k_2_f,2);
+    
+     
+}
+//'*******************************************************************************                
 
 //'*******************************************************************************
 function killproc()
@@ -484,17 +631,12 @@ function write_ini_file($assoc_arr, $path, $has_sections=TRUE) {
 function showusage()
 {
     /*echo "rgbsock.php Rev ". $GLOBALS['revmajor'] ."." .$GLOBALS['revminor'] ."\n";*/
-    echo "rgbsock.php Rev ? \n";
-    echo "Usage: rgbsock.php [option]...\n Using the Raspberry pi as an RGB LED Controller\n";
+    echo "rgbledsck.php Rev ? \n";
+    echo "Usage: rgbledsck.php [option]...\n Using the Raspberry pi as an RGB LED Controller\n";
     echo "Mandatory arguments\n";
-    echo "  -h, \t This help\n";
-    echo "  -x, \t Turn off all sprinklers\n";
-    echo "  -z [1-8] [0,1], \t Turn on/off zone\n";
-    echo "  -c [.001-10] [.001-10] [.001-10], \t Set and turn on LED - Color values seperated by space.\n";
-    echo "  -s [.001-10] [.001-10] [.001-10] [x-duration] [y-count], \t Strobe LED - Color values seperated by space. \n";
-    echo "  -r, \t Used for debuging from console\n";
-    echo "  -D, \t Daemon mode usualy called from sprinkd\n";
-    echo "Zones and pin numbers are set in the sprink.ini file\n";      
+    echo "  r, \t Used for debuging from console\n";
+    echo "  D, \t Daemon mode usualy called from sprinkd\n";
+    echo "Pin numbers are set in the rgbled.ini file\n";      
     echo "\n\n";
 }
 //'*******************************************************************************
