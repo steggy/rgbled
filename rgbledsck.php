@@ -29,6 +29,7 @@ global $pid;
 global $hourtmr;
 global $last;
 global $hourct;
+global $hourcolor;
 global $basedir;
 $GLOBALS['basedir'] = getenv("RGB_LED_HOME");
 
@@ -39,6 +40,7 @@ $GLOBALS['pid'] = 0;
 $GLOBALS['hourct'] = 0;
 $GLOBALS['hourtmr'] = 0;
 $GLOBALS['last'] = "";
+$GLOBALS['hourcolor'] = "";
 
 $GLOBALS['inifile']= $GLOBALS['basedir'] ."/rgbled.ini";
 $GLOBALS['cmdinifile'] = $GLOBALS['basedir'] ."/rgbledcmd.ini";
@@ -170,7 +172,7 @@ function checksock()
 
     if($GLOBALS['hourtmr'] > 0)
     {
-        echo "Hour timer val " .$GLOBALS['hourtmr'] ."\n";
+        //echo "Hour timer val " .$GLOBALS['hourtmr'] ."\n";
         flashhour();
     }
 
@@ -359,7 +361,7 @@ function checksock()
                         $response = "Hour\n";
                         socket_write($client, $response);
                         socket_close($client);
-                        flashhour(1);
+                        flashhour($output[1]);
                         //$scmd = "/rgbwigwag.php 1";
                         //$GLOBALS['status'] = "Hour";
 
@@ -429,18 +431,61 @@ function flashhour($s=0)
 {
     if($s > 0) //start timer
     {
-        echo "Starting hour\n";
         $GLOBALS['hourtmr'] = 1;
         $GLOBALS['last'] = $GLOBALS['status'];
-        $scmd = "/rgbwigwag.php";
-        $GLOBALS['status'] = "Hour";
-        $command =  $GLOBALS['basedir'] .$scmd . ' > /dev/null 2>&1 & echo $!; ';
-        $pid = exec($command, $output);
-        $GLOBALS['pid'] = $pid;
+        $GLOBALS['hourcolor'] = $GLOBALS['rl'] ."," .$GLOBALS['gl'] ."," .$GLOBALS['bl'];
+        switch($s)
+        {
+            case 1:
+                echo "Starting hour\n";
+                $scmd = "/rgbwigwag.php";
+                $GLOBALS['status'] = "Hour";
+                $command =  $GLOBALS['basedir'] .$scmd . ' > /dev/null 2>&1 & echo $!; ';
+                $pid = exec($command, $output);
+                $GLOBALS['pid'] = $pid;
+                break;
+            case 2:
+                echo "Starting 15\n";
+                $scmd = "/rgbstrobe.php";
+                $GLOBALS['status'] = "Hour";
+                $GLOBALS['rl'] = $GLOBALS['ini_array']['color']['r'] = 0;
+                $GLOBALS['gl'] = $GLOBALS['ini_array']['color']['g'] = 10;
+                $GLOBALS['bl'] = $GLOBALS['ini_array']['color']['b'] = 0;
+                write_ini_file($GLOBALS['ini_array'],$GLOBALS['inifile']);
+                //changecolor($GLOBALS['rl'],$GLOBALS['gl'],$GLOBALS['bl']);
+                $command =  $GLOBALS['basedir'] .$scmd . ' > /dev/null 2>&1 & echo $!; ';
+                $pid = exec($command, $output);
+                $GLOBALS['pid'] = $pid;
+                break;
+            case 3:
+                echo "Starting 30\n";
+                $scmd = "/rgbstrobe.php";
+                $GLOBALS['status'] = "Hour";
+                $GLOBALS['rl'] = $GLOBALS['ini_array']['color']['r'] = 0;
+                $GLOBALS['gl'] = $GLOBALS['ini_array']['color']['g'] = 0;
+                $GLOBALS['bl'] = $GLOBALS['ini_array']['color']['b'] = 10;
+                write_ini_file($GLOBALS['ini_array'],$GLOBALS['inifile']);
+                echo "red " .$GLOBALS['rl'] ." \n";
+                echo "green " .$GLOBALS['gl'] ." \n";
+                echo "blue " .$GLOBALS['bl'] ." \n";
+                //changecolor($GLOBALS['rl'],$GLOBALS['gl'],$GLOBALS['bl']);
+                $command =  $GLOBALS['basedir'] .$scmd . ' > /dev/null 2>&1 & echo $!; ';
+                $pid = exec($command, $output);
+                $GLOBALS['pid'] = $pid;
+                break;
+        }
     }else if($GLOBALS['hourct'] > 3000){
         killproc();
         $GLOBALS['hourct'] = 0;
         $GLOBALS['hourtmr'] = 0;
+        $oldc = explode(",",$GLOBALS['hourcolor']);
+        echo "\nCOLOR " .$oldc[1] ."\n";
+        $GLOBALS['rl'] = $GLOBALS['ini_array']['color']['r'] = $oldc[0];;
+        $GLOBALS['gl'] = $GLOBALS['ini_array']['color']['g'] = $oldc[1];;
+        $GLOBALS['bl'] = $GLOBALS['ini_array']['color']['b'] = $oldc[2];;
+        write_ini_file($GLOBALS['ini_array'],$GLOBALS['inifile']);
+        readini($GLOBALS['inifile']);
+
         switch(strtolower($GLOBALS['last']))
         {
             case "fading":
@@ -465,7 +510,7 @@ function flashhour($s=0)
         }
     }
     $GLOBALS['hourct']++;
-    echo "Hour count " .$GLOBALS['hourct'] ."\n";
+    //echo "Hour count " .$GLOBALS['hourct'] ."\n";
 
 
 }
