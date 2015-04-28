@@ -242,10 +242,10 @@ function checksock()
                                 break;
                             case 'c':
                             case 'C':
-                                $response = "Colors ";
-                                $response .= "Red > " .$GLOBALS['rl'];
+                                $response = $GLOBALS['rl'] ."," .$GLOBALS['gl'] ."," .$GLOBALS['bl'];
+                                /*$response .= "Red > " .$GLOBALS['rl'];
                                 $response .= " Green > " .$GLOBALS['gl'];
-                                $response .= " Blue > " .$GLOBALS['bl'] ."\n";
+                                $response .= " Blue > " .$GLOBALS['bl'] ."\n";*/
                                 socket_write($client, $response,strlen($response));
                                 socket_close($client);
                                 break;
@@ -393,6 +393,7 @@ function checksock()
                 $response = "Stopping\n";
                 socket_write($client, $response);
                 socket_close($client);
+                $GLOBALS['status'] = "Stop";
                 $GLOBALS['stop'] = true;
                 break;    
             case "--help":
@@ -701,11 +702,12 @@ function shwhelp()
     $hstring .= "  -setstrobe\t Used for seting duration\n";
     $hstring .= "  -y || -yard, [1-10] \t Turn on yard lights at power 1-10 \n";
     $hstring .= "  -f || -fade\t Fade random colors\n";
+    $hstring .= "  -wigwag [1-3] || red/blue strobe green strobe blue\n";
     $hstring .= "  -setfade\t Sets the fade duration\n";
     $hstring .= "  -get [option]:\n";
     $hstring .= "        fd: Fade duration\n";
     $hstring .= "        sd: Strobe duration\n";
-    $hstring .= "         c: Colors\n";
+    $hstring .= "         c: Colors returned is a coma seperated string in the format red,green,blue (0,0,0)\n";
     $hstring .= "Pin numbers are set in the " .$GLOBALS['inifile'] ." file\n";      
     $hstring .= "\n\n";
     return $hstring;
