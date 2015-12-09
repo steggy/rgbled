@@ -1,4 +1,5 @@
 #! /usr/bin/php
+
 <?
 $rl = '0';
 $gl = '0';
@@ -28,7 +29,110 @@ $GLOBALS['inifile']= $GLOBALS['basedir'] ."/rgbled.ini";
 require($GLOBALS['basedir'] ."/cli_changecolor.php");
 require($GLOBALS['basedir'] ."/cli_readini.php");
 readini($GLOBALS['inifile']);
-randomlight();
+//randomlight();
+christmaslight();
+
+//'*******************************************************************************
+function christmaslight()
+{
+
+
+$colorarray = array(
+                array("red",10,0,0),
+                array("green",0,10,0),
+                array("blue",0,0,10),
+                array("purple",8,0,10),
+                array("yellow",10,3,0),
+                array("orange",10,1,0)
+                );    
+
+$color = 0;
+$pick = 0;
+
+    while(true)
+    {
+        $pick = rand(0,sizeof($colorarray) -1);
+        while($pick == $color)
+        {
+                $pick = rand(0,sizeof($colorarray) -1);  
+        }
+        $color = $pick;
+        echo $color ."\n";
+        echo "COLOR " .$colorarray[$color][0] ." " .$colorarray[$color][1] ."," .$colorarray[$color][2] ."," .$colorarray[$color][3] ."\n";
+        
+        fade($colorarray[$color][1],$colorarray[$color][2],$colorarray[$color][3]);
+        $GLOBALS['count']++;
+        
+        echo "COUNT " .$GLOBALS['count'] ."\n";
+
+        //sleep($GLOBALS['randcolorpause']);
+        sleep(1);
+
+        if($GLOBALS['count'] == 15)
+        {
+            for($i = 0; $i < sizeof($colorarray); $i++)
+            {
+                changecolor($colorarray[$i][1],$colorarray[$i][2],$colorarray[$i][3]);
+                sleep(3);
+            }
+            $GLOBALS['count'] = 0;
+        }
+
+    }
+
+
+return;
+
+    while(true)
+    {       
+        //echo(rand(0,10) / 100);
+        //echo "\n";
+
+
+
+
+        if($GLOBALS['count'] == 10)
+        {
+            $GLOBALS['count'] = 0;
+            $GLOBALS['count2']++;
+        }
+        switch($GLOBALS['count2'])
+        {
+            case 0:
+                $rl = rand(0,10);
+                $gl = '0';
+                $bl = rand(0,10);
+                break;
+            case 1:
+                $rl = rand(0,10);
+                $gl = rand(0,10);
+                $bl = '0';
+                break;
+            case 2:
+                $rl = '0';
+                $gl = rand(0,10);
+                $bl = rand(0,10);
+                break;
+            default;
+                $GLOBALS['count2'] = 0;
+        }
+
+        /*if(!$orl == '0' && !$ogl == '0' && !$obl == '0')
+        {
+            //if orl is less then rl count down else count up
+        }else{*/
+        
+        echo "Red = " .$rl ." green = " .$gl ." Blue = " .$bl ."\n\n";
+        echo "Christmas Lights\n";
+        
+        fade($rl,$gl,$bl);
+        $GLOBALS['count']++;
+        sleep($GLOBALS['randcolorpause']);
+        
+    }
+}
+//'*******************************************************************************
+
 
 
 //'*******************************************************************************

@@ -31,7 +31,8 @@ global $last;
 global $hourct;
 global $hourcolor;
 global $basedir;
-$GLOBALS['basedir'] = getenv("RGB_LED_HOME");
+//$GLOBALS['basedir'] = getenv("RGB_LED_HOME");
+$GLOBALS['basedir'] = "/var/www/rgbled";
 
 $GLOBALS['cmd'] = '';
 $GLOBALS['count'] = 0;
@@ -42,8 +43,11 @@ $GLOBALS['hourtmr'] = 0;
 $GLOBALS['last'] = "";
 $GLOBALS['hourcolor'] = "";
 
-$GLOBALS['inifile']= $GLOBALS['basedir'] ."/rgbled.ini";
-$GLOBALS['cmdinifile'] = $GLOBALS['basedir'] ."/rgbledcmd.ini";
+//$GLOBALS['inifile']= $GLOBALS['basedir'] ."/rgbled.ini";
+//$GLOBALS['cmdinifile'] = $GLOBALS['basedir'] ."/rgbledcmd.ini";
+
+$GLOBALS['inifile']= "/var/www/rgbled/rgbled.ini";
+$GLOBALS['cmdinifile'] = "/var/www/rgbled/rgbledcmd.ini";
 
 $GLOBALS['debug'] = true;
 $GLOBALS['stop'] = false;
@@ -325,6 +329,19 @@ function checksock()
                 socket_close($client);
                 looptest();
                 break;
+            case '-christmas':
+            case '-xmas':
+            case '-chris':
+                killproc();
+                $GLOBALS['status'] = "Christmas";
+                $response = "Christmas\n\n";
+                socket_write($client, $response);
+                socket_close($client);
+                $command =  $GLOBALS['basedir'] .'/rgbchristmas.php' . ' > /dev/null 2>&1 & echo $!; ';
+                echo $command;
+                $pid = exec($command, $output);
+                $GLOBALS['pid'] = $pid;
+                break;
             case '-fade':
             case '-f':
                 killproc();
@@ -405,7 +422,7 @@ function checksock()
                 socket_close($client);
                 break;
             default:
-                $response = "Default:\n\n" .shwhelp();
+                $response = "Default:\nCommand given: " .$output[0] ."\n" .shwhelp();
                 socket_write($client, $response);
                 socket_close($client);
                 break;
