@@ -61,6 +61,21 @@
                         $('#div1').html(data);              
                     }
                     });
+                }
+            function wo(){
+            //var pwr = document.getElementById("pwr");
+            //var pw = pwr.options[pwr.selectedIndex].value;
+                 //alert('This is vv: ' + vv);
+                $.ajax({
+                    type: "POST",
+                    url: "asck.php",
+                    data: "ss=-y&pwr=0",
+                    success:function(data){
+                        //alert('This was sent back: ' + data);
+                        //Next line adds the data from PHP into the DOM
+                        $('#div1').html(data);              
+                    }
+                    });
                 }    
         </script>
 <style>
@@ -146,6 +161,7 @@ left:250px;*/
 <button id="button2" onclick="mm('-fade')">FADE</button>
 <button id="button2" style="background-color:white;" onclick="mm('-strobe')">STROBE</button>
 <button id="button2" style="background-color:white;" onclick="mm('-wigwag')">WIGWAG</button>
+<button id="button2" style="background-color:white;" onclick="mm('-xmas')">CHRISTMAS</button>
 <br><br>
 <button id="button2" onclick="mm('-stop')">OFF</button>
 <br><br>
@@ -185,7 +201,8 @@ for($i=0;$i < 10.5; $i += 0.5)
 <br>
 <br>
 
-<button id="button2" style="background-color:white;" onclick="ww('white')">WHITE</button>
+
+<button id="button2" style="background-color:white;" onclick="ww('-y')">WHITE</button>
 <select id=pwr name=pwr>
 <?
 for($i=1;$i < 11; $i++)
@@ -194,7 +211,8 @@ for($i=1;$i < 11; $i++)
 }
 ?>
     </select>
-    <button id="button2" style="background-color:white;" onclick="ww('whiteoff')">WHITE OFF</button>
+    <button id="button2" style="background-color:white;" onclick="wo()">WHITE OFF</button>
+
 <br><br>
 <button id="button2" onclick="mm('-temp')">Temp</button>
 <button id="button2" style="background-color:white;" onclick="mm('-help')">HELP</button>
