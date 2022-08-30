@@ -200,7 +200,7 @@ function checksock()
 
     if($input == '')
     {
-        break;
+        return;
     }
     
     $output = explode(" ", $input);
@@ -413,7 +413,18 @@ function checksock()
                 $GLOBALS['status'] = "Stop";
                 $GLOBALS['stop'] = true;
                 break;    
-            case "--help":
+            case '-alloff':
+                 killproc();
+                  alloff();
+                 yardlight(0);
+
+                 $response = "Stopping\n";
+                 socket_write($client, $response);
+                 socket_close($client);
+                 $GLOBALS['status'] = "Stop";
+                 $GLOBALS['stop'] = true;
+                 break;
+	    case "--help":
             case "-help":
             case "--h":
             case "-h":
