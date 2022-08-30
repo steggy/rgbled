@@ -3,6 +3,7 @@
 ?>
 <html>
     <head>
+        <META http-equiv="refresh" content="12;URL=http://testuser@localhost/rgbled/crgbledsck.php">
         <script src="jquery.min.js"></script>
         <script type="text/javascript">
             function mm(ss){
