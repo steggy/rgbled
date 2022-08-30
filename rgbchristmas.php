@@ -20,7 +20,7 @@ global $basedir;
 #$GLOBALS['basedir'] = getenv("RGB_LED_HOME");
 $GLOBALS['basedir'] = "/var/www/rgbled";
 
-$GLOBALS['debug'] = 0;
+$GLOBALS['debug'] = False;
 $GLOBALS['count'] = 0;
 $GLOBALS['count2'] = 0;
 
@@ -65,8 +65,8 @@ $pick = 0;
         
         echo "COUNT " .$GLOBALS['count'] ."\n";
 
-        //sleep($GLOBALS['randcolorpause']);
-        sleep(1);
+        sleep($GLOBALS['randcolorpause']);
+        
 
         if($GLOBALS['count'] == 15)
         {
