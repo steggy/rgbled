@@ -13,8 +13,8 @@ global $greenpin;
 global $bluepin;
 global $randcolorpause;
 global $basedir;
-$GLOBALS['basedir'] = getenv("RGB_LED_HOME");
-
+//$GLOBALS['basedir'] = getenv("RGB_LED_HOME");
+$GLOBALS['basedir'] = "/var/www/rgbled";
 
 $GLOBALS['inifile']= $GLOBALS['basedir'] ."/rgbled.ini";
 require($GLOBALS['basedir'] ."/cli_readini.php");
