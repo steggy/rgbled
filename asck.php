@@ -36,6 +36,7 @@ switch(strtolower($_POST['ss']))
 	case "-strobe":
 	case "-wigwag":
 	case "-temp":
+	case "-xmas":
 		$result = shell_exec($app ." " .strtolower($_POST['ss']));
 		echo $result;
 		break;
@@ -58,7 +59,10 @@ switch(strtolower($_POST['ss']))
 	case "-peri":
 			$result = shell_exec($app ." -c 5,5,10");
 			echo $result;	
-			break;					
+			break;
+	case "-y":
+			$result = shell_exec($app ." -y " .$_POST['pwr'] / 10);
+			break;							
 	case "-color":
 	case "-c":
 		//echo "in case";
